@@ -38,7 +38,9 @@ export function DataTableViewOptions<TData>({
           .getAllColumns()
           .filter(
             (column) =>
-              typeof column.accessorFn !== "undefined" && column.getCanHide()
+              typeof column.accessorFn !== "undefined" && 
+              column.getCanHide() &&
+              !column.id.startsWith('week-')
           )
           .map((column) => {
             return (

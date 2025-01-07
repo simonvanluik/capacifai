@@ -1,7 +1,7 @@
 "use client"
 
-import { columns } from "@/components/modules/timeline/columns"
-import { DataTable } from "@/components/modules/timeline/timeline"
+import { columns } from "@/components/modules/timeline/fixed-columns"
+import { DataTable } from "@/components/modules/timeline/timeline-provider"
 import { tasks } from "@/assets/timeline-data/schema"
 
 export default function TasksPage() {
