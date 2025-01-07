@@ -12,7 +12,7 @@ import { format, addWeeks, startOfWeek } from "date-fns"
 export const COLUMN_WIDTHS = {
   select: 40,
   id: 80,
-  title: 200,
+  title: 300,
   status: 100,
   priority: 120,
   actions: 40
