@@ -28,6 +28,7 @@ import {
 import { DataTableToolbar } from "./timeline-toolbar"
 import { format, addWeeks, startOfWeek } from "date-fns"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -40,10 +41,17 @@ export function DataTable<TData, TValue>({
   columns: baseColumns,
   data,
   startDate = new Date(),
-  numberOfWeeks = 12,
+  numberOfWeeks = 24,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
+    select: false,
+    id: false,
+    status: false,
+    priority: false,
+    title: true,
+    actions: true,
+  })
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [sorting, setSorting] = React.useState<SortingState>([])
 
@@ -58,8 +66,8 @@ export function DataTable<TData, TValue>({
         header: format(weekDate, 'w'),
         accessorKey: `week-${i}`,
         cell: () => (
-          <div className="w-[120px] h-full">
-            {/* Week content here */}
+          <div className="h-full w-3 truncate">
+            {/* add week content here*/}
           </div>
         ),
       })
@@ -93,87 +101,73 @@ export function DataTable<TData, TValue>({
     getFacetedUniqueValues: getFacetedUniqueValues(),
   })
 
-  // Calculate fixed columns width
-  const fixedColumnsWidth = React.useMemo(() => {
-    return {
-      select: 40,
-      id: 80,
-      title: 700,
-      status: 100,
-      priority: 100,
-      actions: 40,
-    }
-  }, [])
-
-  const totalFixedWidth = Object.values(fixedColumnsWidth).reduce((a, b) => a + b, 0)
-
   return (
     <div className="flex flex-col space-y-4 w-full">
       <DataTableToolbar table={table} />
+
       <div className="rounded-md border">
-        <div className="flex">
+        <ScrollArea>
+          <div className="flex">
+            {/* Fixed Columns */}
+            <div className="sticky left-0 z-10 bg-background">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <React.Fragment key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => {
+                          const isWeekColumn = header.id.startsWith('week-')
+                          if (isWeekColumn) return null
+                          return (
+                            <TableHead 
+                              key={header.id}
+                              className="h-12"
+                            >
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext()
+                                  )}
+                            </TableHead>
+                          )
+                        })}
+                      </React.Fragment>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {table.getRowModel().rows?.length ? (
+                    table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && "selected"}
+                      >
+                        {row.getVisibleCells().map((cell) => {
+                          const isWeekColumn = cell.column.id.startsWith('week-')
+                          if (isWeekColumn) return null
+                          return (
+                            <TableCell 
+                              key={cell.id}
+                              className="h-[52px]"
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </TableCell>
+                          )
+                        })}
+                      </TableRow>
+                    ))
+                  ) : null}
+                </TableBody>
+              </Table>
+            </div>
 
-          {/* Fixed columns section - no scroll */}
-          <div className="w-fit">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <React.Fragment key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => {
-                        const isWeekColumn = header.id.startsWith('week-')
-                        if (isWeekColumn) return null
-                        return (
-                          <TableHead 
-                            key={header.id}
-                            className="h-12"
-                          >
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                          </TableHead>
-                        )
-                      })}
-                    </React.Fragment>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
-                      {row.getVisibleCells().map((cell) => {
-                        const isWeekColumn = cell.column.id.startsWith('week-')
-                        if (isWeekColumn) return null
-                        return (
-                          <TableCell 
-                            key={cell.id}
-                            className="h-[52px]"
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </TableCell>
-                        )
-                      })}
-                    </TableRow>
-                  ))
-                ) : null}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/* Scrollable week columns section */}
-          <div className="relative border-l border-border overflow-hidden w-full">
-            <ScrollArea className="w-full">
-              <div className={`w-[calc(100vw - ${totalFixedWidth}px)]`}>
+            {/* Scrollable Week Columns */}
+            <div className="w-[calc(100vw-var(--sidebar-width)-24rem)] overflow-auto">
+              <div className="inline-block min-w-max">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -185,7 +179,7 @@ export function DataTable<TData, TValue>({
                             return (
                               <TableHead 
                                 key={header.id}
-                                className="h-12 w-[120px]"
+                                className="h-12 w-[120px] border-l first:border-l-0"
                               >
                                 {header.isPlaceholder
                                   ? null
@@ -213,7 +207,7 @@ export function DataTable<TData, TValue>({
                             return (
                               <TableCell 
                                 key={cell.id}
-                                className="h-[52px] w-[120px]"
+                                className="h-[52px] w-[120px] border-l first:border-l-0"
                               >
                                 {flexRender(
                                   cell.column.columnDef.cell,
@@ -224,23 +218,21 @@ export function DataTable<TData, TValue>({
                           })}
                         </TableRow>
                       ))
-                    ) : (
-                      <TableRow>
-                        <TableCell
-                          colSpan={weekColumns.length}
-                          className="h-24 text-center"
-                        >
-                          No results.
-                        </TableCell>
-                      </TableRow>
-                    )}
+                    ) : null}
                   </TableBody>
                 </Table>
               </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+            </div>
           </div>
-        </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+
+        {/* No results row */}
+        {!table.getRowModel().rows?.length && (
+          <div className="h-24 text-center flex items-center justify-center">
+            No results.
+          </div>
+        )}
       </div>
     </div>
   )
