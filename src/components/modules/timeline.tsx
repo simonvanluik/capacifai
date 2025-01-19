@@ -6,7 +6,7 @@ import { tasks } from "@/assets/timeline-data/schema"
 
 export default function TasksPage() {
   return (
-    <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
+    <div className="h-full flex-1 flex flex-col space-y-8 p-8">
       <div className="flex items-center justify-between space-y-2">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Welcome back</h2>
@@ -15,7 +15,11 @@ export default function TasksPage() {
           </p>
         </div>
       </div>
-      <DataTable data={tasks} columns={columns} />
+
+      <div>
+        <DataTable data={tasks} columns={columns} />
+      </div>
+
     </div>
   )
 }
