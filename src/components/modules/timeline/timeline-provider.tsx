@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+// Import necessary table functionality from TanStack Table
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -16,6 +17,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 
+// Import custom UI table components
 import {
   Table,
   TableBody,
@@ -27,46 +29,51 @@ import {
 
 import { DataTableToolbar } from "./timeline-toolbar"
 import { format, addWeeks, startOfWeek } from "date-fns"
-import { cn } from "@/lib/utils"
 
+// Define the props interface for the DataTable component
+// TData represents the type of data in the table
+// TValue represents the type of values in the columns
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
-  startDate?: Date
-  numberOfWeeks?: number
+  columns: ColumnDef<TData, TValue>[]  // Base columns configuration
+  data: TData[]                        // Data to be displayed in the table
+  startDate?: Date                     // Starting date for the timeline (defaults to current date)
+  numberOfWeeks?: number               // Number of weeks to display (defaults to 300)
 }
 
 export function DataTable<TData, TValue>({
   columns: baseColumns,
   data,
   startDate = new Date(),
-  numberOfWeeks = 30,
+  numberOfWeeks = 300,
 }: DataTableProps<TData, TValue>) {
-  const [rowSelection, setRowSelection] = React.useState({})
+  // State management for table features
+  const [rowSelection, setRowSelection] = React.useState({})              // Track selected rows
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
     select: false,
     id: false,
     status: false,
     priority: false,
     title: true,
-    actions: true,
-  })
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
-  const [sorting, setSorting] = React.useState<SortingState>([])
+    actions: false,
+  })                                                                      // Control column visibility
+  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])  // Store column filters
+  const [sorting, setSorting] = React.useState<SortingState>([])         // Store sorting configuration
 
+  // Generate week columns dynamically based on startDate and numberOfWeeks
   const weekColumns = React.useMemo(() => {
     const weeks = []
     const start = startOfWeek(startDate)
-    
+
     for (let i = 0; i < numberOfWeeks; i++) {
       const weekDate = addWeeks(start, i)
       weeks.push({
         id: `week-${i}`,
-        header: format(weekDate, 'w'),
+        header: format(weekDate, 'w'),        // Display week number
         accessorKey: `week-${i}`,
         cell: () => (
-          <div className="h-full w-3 truncate">
-            {/* add week content here*/}
+          <div className="h-full w-full truncate">
+            {/* Placeholder for week content */}
+            
           </div>
         ),
       })
@@ -74,11 +81,13 @@ export function DataTable<TData, TValue>({
     return weeks
   }, [startDate, numberOfWeeks])
 
+  // Combine base columns with dynamically generated week columns
   const allColumns = React.useMemo(
     () => [...baseColumns, ...weekColumns],
     [baseColumns, weekColumns]
   )
 
+  // Initialize the table with TanStack Table
   const table = useReactTable({
     data,
     columns: allColumns,
@@ -93,116 +102,74 @@ export function DataTable<TData, TValue>({
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
+    // Table feature models
+    getCoreRowModel: getCoreRowModel(),           // Basic table functionality
+    getFilteredRowModel: getFilteredRowModel(),   // Filtering support
+    getSortedRowModel: getSortedRowModel(),       // Sorting support
+    getFacetedRowModel: getFacetedRowModel(),     // Faceted data support
+    getFacetedUniqueValues: getFacetedUniqueValues(), // Unique values for faceting
   })
 
   return (
-    <div className="flex flex-col w-full space-y-4 bg-slate-50">
-
+    <div className="flex flex-col h-[600px] overflow-x-auto space-y-4 w-full">
+      {/* Toolbar component for table controls */}
       <DataTableToolbar table={table} />
 
-      <div className="flex flex-row rounded-md border">
-        <div className="flex w-full">
-          {/* Fixed Columns */}
-          <div className="w-full">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <React.Fragment key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => {
-                        const isWeekColumn = header.id.startsWith('week-')
-                        if (isWeekColumn) return null
-                        return (
-                          <TableHead 
-                            key={header.id}
-                            className="h-12"
-                          >
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                          </TableHead>
-                        )
-                      })}
-                    </React.Fragment>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                    >
-                      {row.getVisibleCells().map((cell) => {
-                        const isWeekColumn = cell.column.id.startsWith('week-')
-                        if (isWeekColumn) return null
-                        return (
-                          <TableCell 
-                            key={cell.id}
-                            className="h-[52px]"
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </TableCell>
-                        )
-                      })}
-                    </TableRow>
-                  ))
-                ) : null}
-              </TableBody>
-            </Table>
-          </div>
+      <Table>
+        {/* Header section with sticky positioning */}
+        <TableHeader className="sticky top-0 z-20 bg-background">
+          <TableRow>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <React.Fragment key={headerGroup.id}>
+                {headerGroup.headers.map((header, index) => (
+                  <TableHead 
+                    key={header.id}
+                    // Make non-week columns sticky to the left
+                    className="sticky left-0 top-0 z-30 bg-background w-[200px]" 
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                  </TableHead>
+                ))}
+              </React.Fragment>
+            ))}
+          </TableRow>
+        </TableHeader>
 
-          {/* Scrollable Week Columns */}
-          <div className="flex flex-initial border-l overflow-x-auto w-full max-w-full bg-red-300">
-            <Table>
-              <TableHeader>
-                <TableRow className="whitespace-nowrap">
-                  {Array.from({ length: numberOfWeeks }, (_, i) => (
-                    <TableHead key={`week-${i}`} className="h-12">
-                      {i + 1}
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} className="whitespace-nowrap">
-                      {Array.from({ length: numberOfWeeks }, (_, i) => (
-                        <TableCell 
-                          key={`week-${i}`} 
-                          className="h-[52px]"
-                        >
-                          {/* Content goes here */}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : null}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-
-        {/* No results row */}
-        {!table.getRowModel().rows?.length && (
-          <div className="h-24 text-center flex items-center justify-center">
-            No results.
-          </div>
-        )}
-      </div>
+        {/* Table body section */}
+        <TableBody>
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                {row.getVisibleCells().map((cell, index) => (
+                  <TableCell 
+                    key={cell.id}
+                    // Apply different styling for week columns vs regular columns
+                    className={`${
+                      !cell.column.id.startsWith('week-')
+                        ? "sticky left-0 z-10 bg-background w-[200px]" // Regular columns
+                        : "p-0 w-[100px]"                             // Week columns
+                    }`}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))
+          ) : (
+            // Display when no data is available
+            <TableRow>
+              <TableCell colSpan={allColumns.length} className="h-24 text-center">
+                No results.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   )
 }
