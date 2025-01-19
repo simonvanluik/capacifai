@@ -44,7 +44,7 @@ export function DataTable<TData, TValue>({
   columns: baseColumns,
   data,
   startDate = new Date(),
-  numberOfWeeks = 300,
+  numberOfWeeks = 50,
 }: DataTableProps<TData, TValue>) {
   // State management for table features
   const [rowSelection, setRowSelection] = React.useState({})              // Track selected rows
@@ -111,65 +111,75 @@ export function DataTable<TData, TValue>({
   })
 
   return (
-    <div className="flex flex-col h-[600px] overflow-x-auto space-y-4 w-full">
+    <div className="flex flex-col h-[600px] space-y-4 w-full">
       {/* Toolbar component for table controls */}
       <DataTableToolbar table={table} />
 
-      <Table>
-        {/* Header section with sticky positioning */}
-        <TableHeader className="sticky top-0 z-20 bg-background">
-          <TableRow>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <React.Fragment key={headerGroup.id}>
-                {headerGroup.headers.map((header, index) => (
-                  <TableHead 
-                    key={header.id}
-                    // Make non-week columns sticky to the left
-                    className="sticky left-0 top-0 z-30 bg-background w-[200px]" 
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                  </TableHead>
-                ))}
-              </React.Fragment>
-            ))}
-          </TableRow>
-        </TableHeader>
-
-        {/* Table body section */}
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
-                {row.getVisibleCells().map((cell, index) => (
-                  <TableCell 
-                    key={cell.id}
-                    // Apply different styling for week columns vs regular columns
-                    className={`${
-                      !cell.column.id.startsWith('week-')
-                        ? "sticky left-0 z-10 bg-background w-[200px]" // Regular columns
-                        : "p-0 w-[100px]"                             // Week columns
-                    }`}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            // Display when no data is available
+      <div className="overflow-x-auto">
+        <Table>
+          {/* Header section with sticky positioning */}
+          <TableHeader className="sticky top-0 z-[2] bg-background">
             <TableRow>
-              <TableCell colSpan={allColumns.length} className="h-24 text-center">
-                No results.
-              </TableCell>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <React.Fragment key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    const isWeekColumn = header.column.id.startsWith('week-');
+                    return (
+                      <TableHead 
+                        key={header.id}
+                        className={`${
+                          !isWeekColumn
+                            ? "sticky left-0 z-[3] bg-background w-[200px]" 
+                            : "w-[100px]"
+                        }`}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                      </TableHead>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+
+          {/* Table body section */}
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                  {row.getVisibleCells().map((cell) => {
+                    const isWeekColumn = cell.column.id.startsWith('week-');
+                    return (
+                      <TableCell 
+                        key={cell.id}
+                        className={`${
+                          !isWeekColumn
+                            ? "sticky left-0 z-[1] bg-background border-r w-[200px]" 
+                            : "p-0 w-[100px]"
+                        }`}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    );
+                  })}
+                </TableRow>
+              ))
+            ) : (
+              // Display when no data is available
+              <TableRow>
+                <TableCell colSpan={allColumns.length} className="h-24 text-center">
+                  No results.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   )
 }
