@@ -27,7 +27,6 @@ import {
 
 import { DataTableToolbar } from "./timeline-toolbar"
 import { format, addWeeks, startOfWeek } from "date-fns"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData, TValue> {
@@ -41,7 +40,7 @@ export function DataTable<TData, TValue>({
   columns: baseColumns,
   data,
   startDate = new Date(),
-  numberOfWeeks = 24,
+  numberOfWeeks = 30,
 }: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
@@ -102,130 +101,100 @@ export function DataTable<TData, TValue>({
   })
 
   return (
-    <div className="flex flex-col space-y-4 w-full">
+    <div className="flex flex-col w-full space-y-4 bg-slate-50">
+
       <DataTableToolbar table={table} />
 
-      <div className="rounded-md border">
-        <ScrollArea>
-          <div className="flex">
-            {/* Fixed Columns */}
-            <div className="sticky left-0 z-10 bg-background">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {table.getHeaderGroups().map((headerGroup) => (
-                      <React.Fragment key={headerGroup.id}>
-                        {headerGroup.headers.map((header) => {
-                          const isWeekColumn = header.id.startsWith('week-')
-                          if (isWeekColumn) return null
-                          return (
-                            <TableHead 
-                              key={header.id}
-                              className="h-12"
-                            >
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(
-                                    header.column.columnDef.header,
-                                    header.getContext()
-                                  )}
-                            </TableHead>
-                          )
-                        })}
-                      </React.Fragment>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        data-state={row.getIsSelected() && "selected"}
-                      >
-                        {row.getVisibleCells().map((cell) => {
-                          const isWeekColumn = cell.column.id.startsWith('week-')
-                          if (isWeekColumn) return null
-                          return (
-                            <TableCell 
-                              key={cell.id}
-                              className="h-[52px]"
-                            >
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </TableCell>
-                          )
-                        })}
-                      </TableRow>
-                    ))
-                  ) : null}
-                </TableBody>
-              </Table>
-            </div>
+      <div className="flex flex-row rounded-md border">
+        <div className="flex w-full">
+          {/* Fixed Columns */}
+          <div className="w-full">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <React.Fragment key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => {
+                        const isWeekColumn = header.id.startsWith('week-')
+                        if (isWeekColumn) return null
+                        return (
+                          <TableHead 
+                            key={header.id}
+                            className="h-12"
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                          </TableHead>
+                        )
+                      })}
+                    </React.Fragment>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                    >
+                      {row.getVisibleCells().map((cell) => {
+                        const isWeekColumn = cell.column.id.startsWith('week-')
+                        if (isWeekColumn) return null
+                        return (
+                          <TableCell 
+                            key={cell.id}
+                            className="h-[52px]"
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
+                          </TableCell>
+                        )
+                      })}
+                    </TableRow>
+                  ))
+                ) : null}
+              </TableBody>
+            </Table>
+          </div>
 
-            {/* Scrollable Week Columns */}
-            <div className="w-[calc(100vw-var(--sidebar-width)-24rem)] overflow-auto">
-              <div className="inline-block min-w-max">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      {table.getHeaderGroups().map((headerGroup) => (
-                        <React.Fragment key={headerGroup.id}>
-                          {headerGroup.headers.map((header) => {
-                            const isWeekColumn = header.id.startsWith('week-')
-                            if (!isWeekColumn) return null
-                            return (
-                              <TableHead 
-                                key={header.id}
-                                className="h-12 w-[120px] border-l first:border-l-0"
-                              >
-                                {header.isPlaceholder
-                                  ? null
-                                  : flexRender(
-                                      header.column.columnDef.header,
-                                      header.getContext()
-                                    )}
-                              </TableHead>
-                            )
-                          })}
-                        </React.Fragment>
+          {/* Scrollable Week Columns */}
+          <div className="flex flex-initial border-l overflow-x-auto w-full max-w-full bg-red-300">
+            <Table>
+              <TableHeader>
+                <TableRow className="whitespace-nowrap">
+                  {Array.from({ length: numberOfWeeks }, (_, i) => (
+                    <TableHead key={`week-${i}`} className="h-12">
+                      {i + 1}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id} className="whitespace-nowrap">
+                      {Array.from({ length: numberOfWeeks }, (_, i) => (
+                        <TableCell 
+                          key={`week-${i}`} 
+                          className="h-[52px]"
+                        >
+                          {/* Content goes here */}
+                        </TableCell>
                       ))}
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {table.getRowModel().rows?.length ? (
-                      table.getRowModel().rows.map((row) => (
-                        <TableRow
-                          key={row.id}
-                          data-state={row.getIsSelected() && "selected"}
-                        >
-                          {row.getVisibleCells().map((cell) => {
-                            const isWeekColumn = cell.column.id.startsWith('week-')
-                            if (!isWeekColumn) return null
-                            return (
-                              <TableCell 
-                                key={cell.id}
-                                className="h-[52px] w-[120px] border-l first:border-l-0"
-                              >
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext()
-                                )}
-                              </TableCell>
-                            )
-                          })}
-                        </TableRow>
-                      ))
-                    ) : null}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
+                  ))
+                ) : null}
+              </TableBody>
+            </Table>
           </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+        </div>
 
         {/* No results row */}
         {!table.getRowModel().rows?.length && (

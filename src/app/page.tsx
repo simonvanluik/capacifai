@@ -1,13 +1,5 @@
 import { AppSidebar } from "@/components/modules/app-sidebar"
 import Timeline from "@/components/modules/timeline"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
@@ -28,7 +20,7 @@ export default function Page() {
           </div>
         </header>
         
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <div>
           <Timeline/>
         </div>
 
